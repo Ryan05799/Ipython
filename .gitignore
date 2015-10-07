@@ -17,6 +17,16 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Image files
+*.bmp
+*.jpg
+
+# excel
+*.xls
+*.xlsx
+feature_results.xlsx
+log.txt
+
 # =========================
 # Operating System Files
 # =========================
