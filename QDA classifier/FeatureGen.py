@@ -5,7 +5,7 @@
 
 import os
 import os.path
-from skimage import data, io
+from skimage import data, io, color
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -25,13 +25,13 @@ class FeatureGen:
     
     #methods
     
-    def __init__(self, id, path, single = False):
+    def __init__(self, id, path, single = False, rmReflect = False):
         
         self.dataID = str(id)
         self.dirPath = path + str(id)
         self.singleImg = single
         self.valid = False
-
+        
         #check file path correct
         if not os.path.exists(self.dirPath):
             print('Invalid file path ' + self.dirPath)
@@ -42,10 +42,16 @@ class FeatureGen:
             except Exception as e:
                 print(e)
         
+        if rmReflect:
+            #jpeg format has 3 channel for the mask image
+            self.maskImg =  color.rgb2gray(self.getImgFile(files, 'binMask_rmReflect'))
+
+        else :
+            self.maskImg =  self.getImgFile(files, 'binMask')        
+        
         if(self.singleImg):
             #Read only single image for analysis
             self.fadImg = self.getImgFile(files, '460nm')
-            self.maskImg =  self.getImgFile(files, 'binMask')
             
             #cancel if image not found
             if self.fadImg == None or self.maskImg == None:
@@ -59,9 +65,7 @@ class FeatureGen:
         else:
             #Read a pair of images
             self.fadImg = self.getImgFile(files, '460nm')
-            self.nadhImg =  self.getImgFile(files, '375nm')
-            self.maskImg =  self.getImgFile(files, 'binMask')
-            
+            self.nadhImg =  self.getImgFile(files, '375nm')            
             #cancel if image not found
             if self.fadImg == None or self.nadhImg == None or self.maskImg == None:
                 print('Invalid data ID ')
@@ -171,6 +175,7 @@ class FeatureGen:
     def outputDict(self):
 
         featureTable = {'0_data ID': self.dataID }
+        
         featureTable['Fad_Intensity_R'] = self.rgbAver(0, self.fadImg, self.maskImg)
         featureTable['Fad_Intensity_G'] = self.rgbAver(1, self.fadImg, self.maskImg)
         featureTable['Fad_Intensity_B'] = self.rgbAver(2, self.fadImg, self.maskImg)

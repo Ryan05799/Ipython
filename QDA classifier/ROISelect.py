@@ -1,16 +1,20 @@
 
 # coding: utf-8
 
-# In[82]:
+# In[18]:
 
 import os
+import os.path
 from tkinter import *
 from tkinter import filedialog
 from tkinter.filedialog import askopenfilename
 from PIL import Image, ImageTk,ImageDraw
+from skimage import data, io
+import matplotlib.pyplot as plt
+import rmReflect as rmrf
 
 
-# In[83]:
+# In[19]:
 
 class RoiMaker:
     
@@ -65,7 +69,7 @@ class RoiMaker:
         self.btnSave = Button(self.btnFrame, height=3, width=12, text = "Save Mask", command = self.saveResult)
         self.btnSave.grid(row = 1, column = 0, padx = 10, pady = 30)
         
-        self.btnRemove = Button(self.btnFrame, height=3, width=12, text = "Remove\n Reflectance", command = self.saveResult)
+        self.btnRemove = Button(self.btnFrame, height=3, width=12, text = "Remove\n Reflectance", command = self.rmReflect)
         self.btnRemove.grid(row = 1, column = 1, padx = 10, pady = 30)
         #Text
         self.logcat = Text(self.logFrame, width = 90, height = 10 )
@@ -88,6 +92,7 @@ class RoiMaker:
             return
         #record current image file path
         self.filePath = os.path.dirname(os.path.abspath(File))
+        self.filename = File
         self.logcat.insert(0.0, 'Load image from ' + File + '\n')
         
         #clear previous ROI when new image is loaded
@@ -140,10 +145,31 @@ class RoiMaker:
      
     #Function for remove the reflectance
     def rmReflect(self):
+        oriImg = data.imread(self.filename)        
+        roiFileName = self.filePath + '/' + 'binMask.bmp'
+        if os.path.isfile(roiFileName):
+            roi = data.imread(roiFileName)
+        else:
+            self.logcat.insert(0.0, 'Please select and save ROI before removing reflectence\n')
+            return
+        
+        imgSeg, mask = rmrf.rmReflect(oriImg, roi)
+        plt.imsave(self.filePath + '/binMask_rmReflect.jpg', mask, cmap = plt.cm.gray)
+        
+        #Display results
+        result = Image.open(self.filePath + '/binMask_rmReflect.jpg')        
+        self.resultImg = ImageTk.PhotoImage(result.resize((int(self.defaultWidth/2), int(self.defaultHeight/2)), Image.ANTIALIAS))
+        self.resultCanvas.create_image(0, 0, image = self.resultImg, anchor = 'nw')        
+        plt.subplot(121)
+        io.imshow(imgSeg)
+        plt.subplot(122)
+        io.imshow(mask)
+        plt.show()
+        
         print('Relectance region removed')
 
 
-# In[84]:
+# In[20]:
 
 root = Tk()
 root.wm_title('ROI Select')
